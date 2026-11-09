@@ -27,15 +27,17 @@
                 </div>
                 <button id="resetBtn" class="mt-4 text-sm text-red-500 underline">番号と履歴をすべてリセット</button>
             </div>
+        </div>
 
-            <div class="mt-6 border-t border-yellow-400 pt-4">
-                <h3 class="font-bold text-yellow-800 mb-2 text-sm">対応済み（消去済み）の番号</h3>
-                <div id="clearedContainer" class="flex flex-wrap gap-2">
-                    <p class="text-yellow-600 text-sm" id="emptyClearedMsg">まだありません</p>
-                </div>
+        <!-- ① 対応済み（消去済み）の番号（上側に配置） -->
+        <div class="bg-white p-6 rounded-xl shadow-md mb-6 border border-yellow-400">
+            <h3 class="font-bold text-yellow-800 mb-2 text-sm">対応済み（消去済み）の番号</h3>
+            <div id="clearedContainer" class="flex flex-wrap gap-2">
+                <p class="text-yellow-600 text-sm" id="emptyClearedMsg">まだありません</p>
             </div>
         </div>
 
+        <!-- ② 呼び出し中・履歴（下側に配置） -->
         <div class="bg-white p-6 rounded-xl shadow-md">
             <h3 class="text-gray-600 font-bold mb-3">呼び出し中・履歴</h3>
             <div id="historyContainer" class="flex flex-wrap gap-2">
