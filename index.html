@@ -36,6 +36,7 @@
             <div class="text-6xl font-black text-gray-800" id="currentNumberDisplay">--</div>
         </div>
 
+        <!-- スタッフ操作パネル（初期表示は完全非表示） -->
         <div id="staffSection" class="hidden bg-yellow-50 p-6 rounded-xl shadow-md mb-6 border border-yellow-300">
             <h2 class="font-bold text-yellow-800 mb-4 text-center">スタッフ操作パネル</h2>
             <div class="flex flex-col gap-3">
@@ -70,7 +71,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <script>
-        // 画像から取得したFirebaseの設定情報
         const firebaseConfig = {
             apiKey: "AIzaSyB06vj9VpmzHf01NGIcahovDghtjvRmPno",
             authDomain: "takolab-96896.firebaseapp.com",
@@ -90,6 +90,9 @@
         let historyList = [];
         let clearedList = [];
         
+        // 新しいパスワード設定
+        const STAFF_PIN = "TAKOLAB.FOREVER";
+
         const modeToggleBtn = document.getElementById('modeToggleBtn');
         const staffSection = document.getElementById('staffSection');
         const customerSection = document.getElementById('customerSection');
@@ -106,10 +109,11 @@
         const clearedContainer = document.getElementById('clearedContainer');
         const emptyClearedMsg = document.getElementById('emptyClearedMsg');
 
+        // モード切り替え（暗証番号の判定）
         modeToggleBtn.addEventListener('click', () => {
             if (!isStaffMode) {
-                const pin = prompt("スタッフ用暗証番号を入力してください\n(パスワード: 1234)");
-                if (pin === "1234") {
+                const pin = prompt("スタッフ用暗証番号を入力してください");
+                if (pin === STAFF_PIN) {
                     isStaffMode = true;
                     staffSection.classList.remove('hidden');
                     customerSection.classList.add('hidden');
@@ -117,7 +121,7 @@
                     modeToggleBtn.classList.replace('bg-gray-200', 'bg-yellow-400');
                     renderHistory();
                 } else if (pin !== null) {
-                    alert("暗証番号が違います。");
+                    alert("暗証番号が正しくありません。");
                 }
             } else {
                 isStaffMode = false;
@@ -216,6 +220,42 @@
                 const badge = document.createElement('div');
                 badge.className = 'flex items-center gap-1 bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-lg font-bold shadow-sm';
                 
+                const numSpan = document.createElement('span');
+                numSpan.textContent = num;
+                badge.appendChild(numSpan);
+
+                // スタッフモード時のみ削除（×）ボタンを表示
+                if (isStaffMode) {
+                    const delBtn = document.createElement('button');
+                    delBtn.innerHTML = '&times;';
+                    delBtn.className = 'ml-1 text-red-500 hover:text-red-700 text-xl leading-none';
+                    delBtn.onclick = () => removeHistory(num);
+                    badge.appendChild(delBtn);
+                }
+                historyContainer.appendChild(badge);
+            });
+        }
+
+        function renderCleared() {
+            clearedContainer.innerHTML = '';
+            if (clearedList.length === 0) {
+                emptyClearedMsg.style.display = 'block';
+                clearedContainer.appendChild(emptyClearedMsg);
+                return;
+            }
+            emptyClearedMsg.style.display = 'none';
+            clearedList.forEach(num => {
+                const badge = document.createElement('div');
+                badge.className = 'bg-gray-300 text-gray-500 px-3 py-1 rounded-full text-sm shadow-inner line-through';
+                badge.textContent = num;
+                clearedContainer.appendChild(badge);
+            });
+        }
+
+        myNumberInput.addEventListener('input', syncUI);
+    </script>
+</body>
+</html>                
                 const numSpan = document.createElement('span');
                 numSpan.textContent = num;
                 badge.appendChild(numSpan);
