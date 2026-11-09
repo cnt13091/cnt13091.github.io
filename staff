@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>【スタッフ専用】呼び出し管理</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-yellow-50 min-h-screen">
+
+    <div class="max-w-md mx-auto p-4 pt-8">
+        <h1 class="text-2xl font-bold text-yellow-900 mb-6 text-center">🛠️ スタッフ専用 操作画面</h1>
+
+        <div class="bg-white p-8 rounded-xl shadow-md text-center mb-6 border-4 border-yellow-500">
+            <p class="text-gray-500 font-bold mb-2">現在の呼び出し番号</p>
+            <div class="text-6xl font-black text-gray-800" id="currentNumberDisplay">--</div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md mb-6 border border-yellow-300">
+            <div class="flex flex-col gap-3">
+                <button id="nextBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg shadow-lg text-xl">
+                    次の番号を呼ぶ (+1)
+                </button>
+                <div class="flex gap-2">
+                    <input type="number" id="manualNumberInput" placeholder="直接入力" class="border p-2 rounded flex-1">
+                    <button id="manualCallBtn" class="bg-gray-800 hover:bg-gray-900 text-white px-4 rounded font-bold">呼ぶ</button>
+                </div>
+                <button id="resetBtn" class="mt-4 text-sm text-red-500 underline">番号と履歴をすべてリセット</button>
+            </div>
+
+            <div class="mt-6 border-t border-yellow-400 pt-4">
+                <h3 class="font-bold text-yellow-800 mb-2 text-sm">対応済み（消去済み）の番号</h3>
+                <div id="clearedContainer" class="flex flex-wrap gap-2">
+                    <p class="text-yellow-600 text-sm" id="emptyClearedMsg">まだありません</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-md">
+            <h3 class="text-gray-600 font-bold mb-3">呼び出し中・履歴</h3>
+            <div id="historyContainer" class="flex flex-wrap gap-2">
+                <p class="text-gray-400 text-sm" id="emptyHistoryMsg">まだありません</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB06vj9VpmzHf01NGIcahovDghtjvRmPno",
+            authDomain: "takolab-96896.firebaseapp.com",
+            projectId: "takolab-96896",
+            storageBucket: "takolab-96896.firebasestorage.app",
+            messagingSenderId: "1069729023763",
+            appId: "1:1069729023763:web:9ec5b836d03bff812dfce6",
+            measurementId: "G-BHK9HY4R9F"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const docRef = db.collection('bunkasai').doc('status');
+
+        let currentNumber = 0;
+        let historyList = [];
+        let clearedList = [];
+
+        const currentNumberDisplay = document.getElementById('currentNumberDisplay');
+        const nextBtn = document.getElementById('nextBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const manualNumberInput = document.getElementById('manualNumberInput');
+        const manualCallBtn = document.getElementById('manualCallBtn');
+        const historyContainer = document.getElementById('historyContainer');
+        const emptyHistoryMsg = document.getElementById('emptyHistoryMsg');
+        const clearedContainer = document.getElementById('clearedContainer');
+        const emptyClearedMsg = document.getElementById('emptyClearedMsg');
+
+        function pushDataToFirebase() {
+            docRef.set({
+                currentNumber: currentNumber,
+                historyList: historyList,
+                clearedList: clearedList
+            }).catch((error) => console.error("エラー:", error));
+        }
+
+        nextBtn.addEventListener('click', () => {
+            const newNumber = currentNumber + 1;
+            currentNumber = newNumber;
+            historyList = historyList.filter(n => n !== newNumber);
+            clearedList = clearedList.filter(n => n !== newNumber);
+            historyList.unshift(newNumber);
+            if (historyList.length > 30) historyList.pop();
+            pushDataToFirebase();
+        });
+
+        manualCallBtn.addEventListener('click', () => {
+            const val = parseInt(manualNumberInput.value);
+            if (!isNaN(val) && val > 0) {
+                currentNumber = val;
+                historyList = historyList.filter(n => n !== val);
+                clearedList = clearedList.filter(n => n !== val);
+                historyList.unshift(val);
+                if (historyList.length > 30) historyList.pop();
+                manualNumberInput.value = '';
+                pushDataToFirebase();
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+            if(confirm("本当に番号と履歴をすべてリセットしますか？")) {
+                currentNumber = 0;
+                historyList = [];
+                clearedList = [];
+                pushDataToFirebase();
+            }
+        });
+
+        window.removeHistory = function(numToRemove) {
+            historyList = historyList.filter(n => n !== numToRemove);
+            if (!clearedList.includes(numToRemove)) {
+                clearedList.unshift(numToRemove);
+            }
+            pushDataToFirebase();
+        }
+
+        docRef.onSnapshot((doc) => {
+            if (doc.exists) {
+                const data = doc.data();
+                currentNumber = data.currentNumber || 0;
+                historyList = data.historyList || [];
+                clearedList = data.clearedList || [];
+                syncUI();
+            }
+        });
+
+        function syncUI() {
+            currentNumberDisplay.textContent = currentNumber === 0 ? "--" : currentNumber;
+            renderHistory();
+            renderCleared();
+        }
+
+        function renderHistory() {
+            historyContainer.innerHTML = '';
+            if (historyList.length === 0) {
+                emptyHistoryMsg.style.display = 'block';
+                historyContainer.appendChild(emptyHistoryMsg);
+                return;
+            }
+            emptyHistoryMsg.style.display = 'none';
+            historyList.forEach(num => {
+                const badge = document.createElement('div');
+                badge.className = 'flex items-center gap-1 bg-yellow-200 text-yellow-900 px-3 py-1 rounded-full text-lg font-bold shadow-sm';
+                
+                const numSpan = document.createElement('span');
+                numSpan.textContent = num;
+                badge.appendChild(numSpan);
+
+                const delBtn = document.createElement('button');
+                delBtn.innerHTML = '&times;';
+                delBtn.className = 'ml-1 text-red-500 hover:text-red-700 text-xl leading-none';
+                delBtn.onclick = () => removeHistory(num);
+                badge.appendChild(delBtn);
+
+                historyContainer.appendChild(badge);
+            });
+        }
+
+        function renderCleared() {
+            clearedContainer.innerHTML = '';
+            if (clearedList.length === 0) {
+                emptyClearedMsg.style.display = 'block';
+                clearedContainer.appendChild(emptyClearedMsg);
+                return;
+            }
+            emptyClearedMsg.style.display = 'none';
+            clearedList.forEach(num => {
+                const badge = document.createElement('div');
+                badge.className = 'bg-gray-300 text-gray-500 px-3 py-1 rounded-full text-sm shadow-inner line-through';
+                badge.textContent = num;
+                clearedContainer.appendChild(badge);
+            });
+        }
+    </script>
+</body>
+</html>
