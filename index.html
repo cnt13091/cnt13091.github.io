@@ -27,7 +27,7 @@
             <p class="text-gray-600 mb-2">あなたの整理券番号</p>
             <input type="number" id="myNumberInput" placeholder="例: 15" class="w-32 text-center text-3xl p-2 border-2 border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
             
-            <!-- 呼び出し通知（画像＋メッセージ変更） -->
+            <!-- 呼び出し通知（最新呼び出し中、または履歴に含まれる場合に表示） -->
             <div id="callAlert" class="hidden mt-4 text-red-600 font-bold text-2xl animate-bounce flex flex-col items-center gap-2">
                 <img src="tako.png" alt="たこ焼きタコ" class="w-32 h-32 object-contain">
                 <span>🐙 焼きあがりました！ 🐙</span>
@@ -198,7 +198,11 @@
             currentNumberDisplay.textContent = currentNumber === 0 ? "--" : currentNumber;
             
             const myNum = parseInt(myNumberInput.value);
-            if (!isStaffMode && currentNumber > 0 && myNum === currentNumber) {
+            
+            // 自分の番号が「現在呼び出し中」または「呼び出し済み履歴」に含まれているか判定
+            const isMyNumberCalled = !isNaN(myNum) && myNum > 0 && (myNum === currentNumber || historyList.includes(myNum));
+
+            if (!isStaffMode && isMyNumberCalled) {
                 bodyElement.classList.add('animate-flash');
                 callAlert.classList.remove('hidden');
             } else {
