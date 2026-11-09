@@ -26,8 +26,11 @@
         <div id="customerSection" class="bg-white p-6 rounded-xl shadow-md mb-6 text-center">
             <p class="text-gray-600 mb-2">あなたの整理券番号</p>
             <input type="number" id="myNumberInput" placeholder="例: 15" class="w-32 text-center text-3xl p-2 border-2 border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <div id="callAlert" class="hidden mt-4 text-red-600 font-bold text-2xl animate-bounce">
-                🎉 あなたの番です！ 🎉
+            
+            <!-- 呼び出し通知（画像＋メッセージ変更） -->
+            <div id="callAlert" class="hidden mt-4 text-red-600 font-bold text-2xl animate-bounce flex flex-col items-center gap-2">
+                <img src="tako.png" alt="たこ焼きタコ" class="w-32 h-32 object-contain">
+                <span>🐙 焼きあがりました！ 🐙</span>
             </div>
         </div>
 
@@ -36,7 +39,7 @@
             <div class="text-6xl font-black text-gray-800" id="currentNumberDisplay">--</div>
         </div>
 
-        <!-- スタッフ操作パネル（初期表示は非表示） -->
+        <!-- スタッフ操作パネル -->
         <div id="staffSection" class="hidden bg-yellow-50 p-6 rounded-xl shadow-md mb-6 border border-yellow-300">
             <h2 class="font-bold text-yellow-800 mb-4 text-center">スタッフ操作パネル</h2>
             <div class="flex flex-col gap-3">
@@ -90,7 +93,6 @@
         let historyList = [];
         let clearedList = [];
         
-        // パスワードを SMCLUB に設定
         const STAFF_PIN = "SMCLUB";
 
         const modeToggleBtn = document.getElementById('modeToggleBtn');
